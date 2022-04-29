@@ -41,6 +41,15 @@ resource "random_id" "instance_name_suffix" {
   byte_length = 4
 }
 
+
+resource "google_dns_record_set" "set" {
+  name         = "${var.domain}."
+  type         = "A"
+  ttl          = 10
+  managed_zone = var.managed_dns_zone
+  rrdatas      = [google_compute_instance.rstudio.network_interface.0.access_config.0.nat_ip]
+}
+
 resource "google_compute_instance" "rstudio" {
   name                    = "rstudio-${random_id.instance_name_suffix.hex}"
   machine_type            = var.rstudio_machine_config.machine_type
@@ -49,6 +58,8 @@ resource "google_compute_instance" "rstudio" {
 
   metadata_startup_script = templatefile("rstudio_provision.sh", 
     { 
+      domain=var.domain,
+      admin_email=var.admin_email
     }
   )
 
